@@ -42,8 +42,6 @@ export default abstract class BObject {
      * Remove html content
      */
     public remove() {
-        let parent = this.params.element.parentElement;
-
         this.params.element.remove();
 
         this.params.getRender().draw(this.params.globalVariables);
