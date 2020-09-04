@@ -18,20 +18,15 @@ export interface Component {
     element? : HTMLElement | Element;
 }
 
-export interface Cache {
-    fileUrl: string;
-    content: string;
-};
-
 export default class Render {
 
     private element : HTMLElement;
-    private cache : Array<Cache> = [];
+    private cache : Array<Element | HTMLElement> = [];
     private router : Router;
     private objects : Array<BObject> = [
-        new ObjectTemplate(),
-        new ObjectCondition(),
-        new ObjectCycle()
+        new ObjectTemplate,
+        new ObjectCondition,
+        new ObjectCycle
     ];
 
 
@@ -83,20 +78,10 @@ export default class Render {
         if(!component.element){
             component.element = this.element;
         }
-        this.cache.forEach((e) => {
-            if(e.fileUrl === component.componentUrl){
-                raxRender(e.content, component.element);
-                return fxCall();
-            }
-        });
         
         Net.process(component.componentUrl, (data : any) => {
-            this.cache.push({
-                fileUrl: component.componentUrl,
-                content: data
-            });
+            fxCall();
             raxRender(data, component.element);
-            return fxCall();
         });
 
         return {
@@ -111,25 +96,13 @@ export default class Render {
      * @param fileUrl url to file draw
      * @param element element to drawing
      */
-    public drawFile(fileUrl : string, variables: {}, element? : HTMLElement | Element) {
+    public drawFile(fileUrl : string, element? : HTMLElement | Element) {
         let fxCall : Function;
         if(!element){
             element = this.element;
         }
-        this.cache.forEach((e) => {
-            if(e.fileUrl === fileUrl){
-                element.innerHTML = e.content;
-                this.draw(variables);
-                fxCall();
-            }
-        });
         Net.process(fileUrl, (data : any) => {
             element.innerHTML = data;
-            this.cache.push({
-                fileUrl: fileUrl,
-                content: data
-            });
-            this.draw(variables);
             fxCall();
         });
 
@@ -158,6 +131,7 @@ export default class Render {
             let object = this.objects[i];
             let elementsTag = drawElement.getElementsByTagName(object.getObject());
             for(let e = 0; e < elementsTag.length; e++){
+                let newObject = Object.create(object);
                 let element = elementsTag[e];
                 if(this.checkIsUnpackedParents(element)){
                     /*
@@ -169,8 +143,11 @@ export default class Render {
                     element.remove();
                     continue;
                 }
+                if(this.cRenderElement(element)){
+                    continue;
+                }
                 let compiledAttr = this.compileAttribute(variables, element.getAttribute("var"));
-                object.setRenderParams({
+                newObject.setRenderParams({
                     element: element,
                     compiledAttribute: compiledAttr,
                     globalVariables: variables,
@@ -178,7 +155,7 @@ export default class Render {
                         return _this;
                     }
                 });
-                object.render();
+                newObject.render();
             }
         }
         /*
@@ -236,6 +213,18 @@ export default class Render {
             }
             element = element.parentElement;
         }
+        return false;
+    }
+
+    /**
+     * Cache handled elements
+     * @param element element to cache
+     */
+    private cRenderElement(element : HTMLElement | Element) : boolean {
+        if(this.cache.indexOf(element) !== -1){
+            return true;
+        }
+        this.cache.push(element);
         return false;
     }
 
