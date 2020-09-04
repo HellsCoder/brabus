@@ -7,9 +7,8 @@ export default class ObjectTemplate extends BObject {
     }
 
     public render(): void {
-        this.getRenderParams().getRender().drawFile(this.getRenderParams().compiledAttribute, this.getRenderParams().globalVariables, this.getRenderParams().element).finish(() => {
+        this.getRenderParams().getRender().drawFile(this.getRenderParams().compiledAttribute,this.getRenderParams().element).finish(() => {
             this.unpack();
         });
     }
-    
 }
