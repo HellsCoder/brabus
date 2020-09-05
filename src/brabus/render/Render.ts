@@ -55,7 +55,6 @@ export default class Render {
             ...variables,
             ...this.variables
         };
-        console.info(this.variables);
         this.draw();
     }
 
