@@ -23,6 +23,7 @@ export default class Render {
     private element : HTMLElement;
     private cache : Array<Element | HTMLElement> = [];
     private router : Router;
+    private variables : {};
     private objects : Array<BObject> = [
         new ObjectTemplate,
         new ObjectCondition,
@@ -39,8 +40,14 @@ export default class Render {
      * First draw scene
      * @param variables variables to draw
      */
-    public draw(variables : {}) : void {
-        this.compileScene(variables, this.element);
+    public draw(variables? : {}) : void {
+        if(!this.variables && !variables){
+            throw "Failed to draw scene, vars is not defined";
+        }
+        this.compileScene(variables ? variables : this.variables, this.element);
+        if(!this.variables && variables){
+            this.variables = variables;
+        }
     }
 
     /**
