@@ -162,6 +162,24 @@ export default class Render {
             Заново регистрируем обработку кликов по ссылкам, так как html разметка перерисовалась и события сбросились
         */
         this.router.setClickHandler();
+        this.bFxHandlers(variables);
+    }
+
+    /**
+     * Start handle b-fx attribute
+     */
+    private bFxHandlers (variables : {}) : void {
+        for(let i = 0; i < this.element.getElementsByClassName("b-fx").length; i++){
+            let element = this.element.getElementsByClassName("b-fx")[i];
+            if(!element.hasAttribute("fx")){
+                element.classList.remove('b-fx');
+                continue;
+            }
+            let fxInvoke = this.compileAttribute(variables, element.getAttribute("fx"));
+            (<HTMLElement>element).onclick = () => {
+                fxInvoke(element);
+            }
+        }
     }
 
     /**
@@ -289,6 +307,10 @@ export default class Render {
 
         if(attr.substr(0, 1) === "~"){
             return attr.substr(1);
+        }
+
+        if(variables[attr] instanceof Function){
+            return variables[attr];
         }
 
         if(attr == "false"){
