@@ -15,7 +15,7 @@ export default class Brabus {
         this.element = element;
         this.router = new Router();
         this.render = new Render(this.element, this.router);
-        this.brabusQuery = new BrabusQuery(this.element, this.router);
+        this.brabusQuery = new BrabusQuery(this.element, this.router, this.render);
     }
 
     /**
