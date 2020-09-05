@@ -23,9 +23,7 @@ export default class Brabus {
      */
     public run(renderVariables? : {}) : void {
         this.router.callRoute();
-        if(renderVariables){
-            this.render.draw(renderVariables);
-        }
+        this.render.draw(renderVariables);
     }
 
     /**
