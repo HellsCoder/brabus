@@ -192,7 +192,9 @@ export default class Render {
             }
             let fxInvoke = this.compileAttribute(variables, element.getAttribute("fx"));
             (<HTMLElement>element).onclick = () => {
-                fxInvoke(element);
+                if(element.classList.contains('b-fx')){
+                    fxInvoke(element);
+                }
             }
         }
     }
