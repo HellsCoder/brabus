@@ -18,10 +18,16 @@ export interface Component {
     element? : HTMLElement | Element;
 }
 
+interface Template {
+    url: string;
+    content: string;
+}
+
 export default class Render {
 
     private element : HTMLElement;
     private cache : Array<Element | HTMLElement> = [];
+    private tplCache : Array<Template> = [];
     private router : Router;
     private variables : {} = {};
     private objects : Array<BObject> = [
@@ -63,7 +69,7 @@ export default class Render {
      * @param component component to draw
      */
     public drawComponent(component : Component){
-        let fxCall : Function;
+        let fxCall : Function = ()=>{};
 
         const raxRender = (content : string, toElement : Element) : void => {
             let contentDraw = this.getBlockByContent(content, "template");
@@ -77,11 +83,12 @@ export default class Render {
             for(let i = 0; i < styleList.length; i++){
                 let style = (<any>styleList[i]);
                 let selectorText = style.selectorText;
-                let element : HTMLElement = toElement.querySelector(selectorText);
-                
+                let element : HTMLElement = toElement.querySelector(selectorText.indexOf(':') !== -1 ? selectorText.split(":")[0] : selectorText);
+                console.info(style);
+
                 let emulatedClass = "b-" + Math.random().toString(36).substring(3);
                 element.classList.add(emulatedClass);
-                styleElement.innerHTML += `.${emulatedClass}{${style.style.cssText}}`;
+                styleElement.innerHTML += `.${emulatedClass  + (selectorText.indexOf(':') !== -1 ? ':' + selectorText.split(":")[1] : '')}{${style.style.cssText}}`;
             }
             document.body.appendChild(styleElement);
             /*
@@ -116,16 +123,49 @@ export default class Render {
         if(!element){
             element = this.element;
         }
-        Net.process(fileUrl, (data : any) => {
-            element.innerHTML = data;
+        if(!this.isCached(fileUrl)){
+            Net.process(fileUrl, (data : any) => {
+                element.innerHTML = data;
+                let tplCache : Template = {
+                    url: fileUrl,
+                    content: data
+                };
+                this.tplCache.push(tplCache);
+                fxCall();
+            });
+        }else{
+            element.innerHTML = this.getCache(fileUrl);
             fxCall();
-        });
+        }
 
         return {
             finish: (fx : Function) => {
                 fxCall = fx;
             }
         }
+    }
+
+    /*
+     * Проверяет закэширован ли файл, чтобы не грузить повторно
+     */
+    private isCached(url : string) : boolean {
+        for(let i = 0; i < this.tplCache.length; i++){
+            let tplCache = this.tplCache[i];
+            if(tplCache.url === url){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private getCache(url: string){
+        for(let i = 0; i < this.tplCache.length; i++){
+            let tplCache = this.tplCache[i];
+            if(tplCache.url === url){
+                return tplCache.content;
+            }
+        }
+        return "";
     }
 
     /**
