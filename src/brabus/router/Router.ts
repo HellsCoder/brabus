@@ -7,9 +7,15 @@ export default class Router {
 
     private errorCallback : Function;
 
+
     constructor() {
         this.currentPath = window.location.pathname.substr(1);
         this.setClickHandler();
+        window.addEventListener("popstate", (e) => {
+            let url = new URL(window.location.href);
+            console.info(e);
+            this.go(url.pathname);
+        });
     }
 
     /**
@@ -21,12 +27,21 @@ export default class Router {
                 return;
             }
             let url = e.getAttribute("href");
-            if(url.substr(0,1) !== "/"){
+            if(url.substr(0,1) !== "/" && url.substr(0, 1) !== "#"){
                 return;
             }
             e.addEventListener("click", (event : Event) => {
                 event.preventDefault();
-                this.go(url);
+                if(url.substr(0,1) === "#"){
+                    let scrollElement = <HTMLElement>document.querySelector(url);
+                    if(!scrollElement){
+                        return;
+                    }
+                    let to = scrollElement.offsetTop;
+                    document.body.scrollTop = to;
+                }else{
+                    this.go(url);
+                }
             });
         });
     }
