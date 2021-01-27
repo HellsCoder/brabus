@@ -30,6 +30,7 @@ export default class Render {
     private tplCache : Array<Template> = [];
     private router : Router;
     private variables : {} = {};
+    private currentFileDrawed : string;
     private objects : Array<BObject> = [
         new ObjectTemplate,
         new ObjectCondition,
@@ -74,7 +75,7 @@ export default class Render {
         const raxRender = (content : string, toElement : Element) : void => {
             let contentDraw = this.getBlockByContent(content, "template");
             let css = this.getBlockByContent(content, "style");
-            toElement.innerHTML = contentDraw;
+            toElement.innerHTML = this.replaceAllVars(contentDraw, {...this.variables, ...component.variables});
             /*
                 Расчет стилей
             */
@@ -102,8 +103,8 @@ export default class Render {
         }
         
         Net.process(component.componentUrl, (data : any) => {
-            fxCall();
             raxRender(data, component.element);
+            fxCall();
         });
 
         return {
@@ -118,30 +119,33 @@ export default class Render {
      * @param fileUrl url to file draw
      * @param element element to drawing
      */
-    public drawFile(fileUrl : string, element? : HTMLElement | Element) {
-        let fxCall : Function;
+    public drawFile(fileUrl : string, fxCall? : Function, element? : HTMLElement | Element) {
+        if(!fxCall){
+            fxCall = () => {};
+        }
+        if(this.currentFileDrawed === fileUrl){
+            fxCall();
+            return;
+        }
+        this.currentFileDrawed = fileUrl;
         if(!element){
             element = this.element;
         }
         if(!this.isCached(fileUrl)){
             Net.process(fileUrl, (data : any) => {
-                element.innerHTML = data;
+                element.innerHTML = this.replaceAllVars(data, this.variables);
                 let tplCache : Template = {
                     url: fileUrl,
                     content: data
                 };
                 this.tplCache.push(tplCache);
+                this.draw();
                 fxCall();
             });
         }else{
-            element.innerHTML = this.getCache(fileUrl);
+            element.innerHTML = this.replaceAllVars(this.getCache(fileUrl), this.variables);
+            this.draw();
             fxCall();
-        }
-
-        return {
-            finish: (fx : Function) => {
-                fxCall = fx;
-            }
         }
     }
 
@@ -355,7 +359,6 @@ export default class Render {
      * @param attr attribute to compile
      */
     private compileAttribute(variables : {}, attr : string) {
-
         let inversion = false;
         if(attr.substr(0, 1) === "!"){
             attr = attr.substr(1);
